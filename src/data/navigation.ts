@@ -1,8 +1,8 @@
 export interface NavItem {
   readonly id: string
   readonly label: string
-  readonly path: string
-  readonly icon: string
+  readonly href: string
+  readonly badge?: string
 }
 
 export interface NavGroup {
@@ -14,26 +14,35 @@ export const navigation: readonly NavGroup[] = [
   {
     category: 'OVERVIEW',
     items: [
-      { id: 'home', label: 'ホーム', path: '/', icon: 'Home' },
+      { id: 'hero', label: '概要', href: '#hero' },
+      { id: 'pain', label: '課題提起', href: '#pain' },
+      { id: 'services', label: 'サービス一覧', href: '#services' },
     ],
   },
   {
-    category: 'SERVICES',
+    category: 'サービス詳細',
     items: [
-      { id: 'strategy', label: 'AI戦略設計', path: '/services/strategy', icon: 'Target' },
-      { id: 'development', label: 'AI駆動開発', path: '/services/development', icon: 'Zap' },
-      { id: 'training', label: '研修・育成', path: '/services/training', icon: 'GraduationCap' },
-      { id: 'poc', label: 'PoC→本番', path: '/services/poc', icon: 'Rocket' },
-      { id: 'talent', label: 'AI人材支援', path: '/services/talent', icon: 'Users' },
-      { id: 'advisory', label: '顧問・顧問', path: '/services/advisory', icon: 'Shield' },
-      { id: 'operations', label: '運用・内製化', path: '/services/operations', icon: 'RefreshCw' },
+      { id: 'svc-strategy', label: 'AI戦略事業推進支援', href: '#svc-strategy' },
+      { id: 'svc-dev', label: 'AI駆動開発', href: '#svc-dev' },
+      { id: 'svc-training', label: '研修・人材育成', href: '#svc-training' },
+      { id: 'svc-talent', label: '人材紹介・アサイン', href: '#svc-talent' },
+      { id: 'svc-advisory', label: '顧問・アドバイザリー', href: '#svc-advisory' },
     ],
   },
   {
-    category: 'SUPPORT',
+    category: '実績・価値',
     items: [
-      { id: 'faq', label: 'よくある質問', path: '/faq', icon: 'HelpCircle' },
-      { id: 'contact', label: 'お問い合わせ', path: '/contact', icon: 'Mail' },
+      { id: 'cases', label: '導入事例', href: '#cases' },
+      { id: 'devos', label: 'AI Dev OS', href: '#devos' },
+      { id: 'values', label: '提供価値', href: '#values' },
+      { id: 'transformation', label: '導入効果', href: '#transformation' },
+    ],
+  },
+  {
+    category: '組織',
+    items: [
+      { id: 'team', label: 'チーム', href: '#team' },
+      { id: 'summary', label: 'まとめ', href: '#summary' },
     ],
   },
 ]

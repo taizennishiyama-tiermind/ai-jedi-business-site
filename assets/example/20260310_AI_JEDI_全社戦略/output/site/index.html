@@ -1,0 +1,1071 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI JEDI — AIを、組織に実装する。</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --sky-50:  #f4f4f5;
+      --sky-100: #e4e4e7;
+      --sky-200: #d4d4d8;
+      --sky-300: #a1a1aa;
+      --sky-400: #52525b;
+      --sky-500: #3f3f46;
+      --sky-600: #3f3f46;
+      --sky-700: #27272a;
+      --sky-800: #18181b;
+      --blue-500: #27272a;
+      --blue-600: #18181b;
+      --gray-50:  #fafafa;
+      --gray-100: #f4f4f5;
+      --gray-200: #e4e4e7;
+      --gray-300: #d4d4d8;
+      --gray-400: #a1a1aa;
+      --gray-500: #71717a;
+      --gray-600: #52525b;
+      --gray-700: #3f3f46;
+      --gray-800: #27272a;
+      --gray-900: #18181b;
+      --sidebar-w: 264px;
+    }
+
+    html { scroll-behavior: smooth; -webkit-font-smoothing: antialiased; }
+
+    body {
+      background: #fff;
+      color: var(--gray-900);
+      font-family: "Inter", "Noto Sans JP", sans-serif;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    /* ─── LAYOUT ─── */
+    .app { display: flex; min-height: 100vh; }
+
+    /* ─── SIDEBAR ─── */
+    .sidebar {
+      width: var(--sidebar-w);
+      flex-shrink: 0;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      background: #fff;
+      border-right: 1px solid var(--gray-200);
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar::-webkit-scrollbar { width: 4px; }
+    .sidebar::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 9999px; }
+
+    .sidebar-logo {
+      display: flex; align-items: center; gap: 10px;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-100);
+      text-decoration: none;
+    }
+    .logo-icon {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, var(--sky-400), var(--blue-500));
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 900; font-size: 14px; flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(56,189,248,0.3);
+    }
+    .logo-name { font-weight: 700; font-size: 13px; color: var(--gray-900); letter-spacing: 0.02em; line-height: 1.2; }
+    .logo-sub { font-size: 10px; color: var(--gray-400); font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-top: 1px; }
+
+    .sidebar-nav { flex: 1; padding: 10px; }
+
+    .nav-label {
+      padding: 12px 12px 5px;
+      font-size: 10px; font-weight: 700; color: var(--gray-400);
+      letter-spacing: 0.12em; text-transform: uppercase;
+    }
+
+    .nav-item {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 12px; border-radius: 8px;
+      text-decoration: none; font-size: 13px; font-weight: 500;
+      color: var(--gray-500); transition: background 0.15s, color 0.15s;
+      position: relative; cursor: pointer;
+    }
+    .nav-item:hover { background: var(--gray-50); color: var(--gray-800); }
+    .nav-item.active { background: var(--sky-50); color: var(--sky-700); font-weight: 600; }
+    .nav-item.active::before {
+      content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      width: 3px; height: 16px; background: var(--sky-500); border-radius: 9999px;
+    }
+    .nav-icon { width: 14px; height: 14px; flex-shrink: 0; opacity: 0.65; }
+    .nav-item.active .nav-icon { opacity: 1; }
+
+    .step-badge {
+      margin-left: auto; font-size: 9px; font-weight: 700;
+      background: var(--sky-100); color: var(--sky-700);
+      padding: 1px 7px; border-radius: 9999px; letter-spacing: 0.04em;
+    }
+
+    .sidebar-footer {
+      padding: 12px 20px; border-top: 1px solid var(--gray-100);
+      font-size: 10px; color: var(--gray-400);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .footer-dot { width: 6px; height: 6px; background: linear-gradient(135deg, var(--sky-400), var(--blue-500)); border-radius: 9999px; }
+
+    /* ─── MAIN ─── */
+    .main { flex: 1; min-width: 0; }
+
+    .mobile-header {
+      display: none; position: sticky; top: 0; z-index: 30;
+      align-items: center; gap: 12px; padding: 12px 20px;
+      background: rgba(255,255,255,0.9); backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--gray-200);
+    }
+    .mobile-menu-btn {
+      background: none; border: none; cursor: pointer; padding: 6px;
+      border-radius: 8px; color: var(--gray-600); transition: background 0.15s;
+    }
+    .mobile-menu-btn:hover { background: var(--gray-100); }
+
+    .sidebar-overlay {
+      display: none; position: fixed; inset: 0; z-index: 40;
+      background: rgba(0,0,0,0.2); backdrop-filter: blur(4px);
+    }
+    .sidebar-overlay.open { display: block; }
+    .sidebar.open { transform: translateX(0); }
+
+    .content { max-width: 800px; margin: 0 auto; padding: 40px 48px 80px; }
+
+    /* ─── SECTION BASE ─── */
+    .doc-section { scroll-margin-top: 24px; margin-bottom: 56px; }
+    .doc-divider { width: 100%; height: 1px; background: var(--gray-100); border: none; margin: 0 0 48px; }
+
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11px; font-weight: 700; color: var(--sky-500);
+      letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px;
+    }
+    .section-title {
+      font-size: clamp(15px, 1.9vw, 20px); font-weight: 900;
+      color: var(--gray-900); line-height: 1.3; letter-spacing: -0.01em; margin-bottom: 8px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .section-lead { font-size: 14px; color: var(--gray-500); line-height: 1.8; max-width: 600px; margin-bottom: 28px; }
+
+    /* ─── HERO ─── */
+    .hero { padding: 8px 0 44px; border-bottom: 1px solid var(--gray-100); margin-bottom: 48px; }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 14px; background: var(--sky-50); border: 1px solid var(--sky-100);
+      border-radius: 9999px; font-size: 11px; font-weight: 700; color: var(--sky-600);
+      letter-spacing: 0.05em; margin-bottom: 20px;
+    }
+    .hero-badge-dot { width: 6px; height: 6px; background: var(--sky-500); border-radius: 9999px; animation: pdot 2s ease-in-out infinite; }
+    @keyframes pdot { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.3)} }
+
+    .hero h1 {
+      font-size: clamp(28px, 3.8vw, 44px); font-weight: 900; line-height: 1.15;
+      color: var(--gray-900); letter-spacing: -0.025em; margin-bottom: 18px;
+    }
+    .gradient-text {
+      background: linear-gradient(90deg, var(--sky-500), var(--blue-600));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hero-subcopy { font-size: 14px; color: var(--gray-600); line-height: 1.85; max-width: 580px; margin-bottom: 12px; font-weight: 500; }
+    .hero-overview {
+      background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 12px;
+      padding: 18px 22px; font-size: 13px; color: var(--gray-600); line-height: 1.85;
+      margin-bottom: 28px;
+    }
+    .hero-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 20px; background: linear-gradient(90deg, var(--sky-400), var(--blue-500));
+      color: white; border-radius: 8px; font-size: 13px; font-weight: 700;
+      text-decoration: none; box-shadow: 0 4px 14px rgba(0,0,0,0.18);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+
+    .btn-secondary {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 9px 20px; background: white; color: var(--gray-700);
+      border: 1px solid var(--gray-200); border-radius: 8px;
+      font-size: 13px; font-weight: 600; text-decoration: none;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .btn-secondary:hover { background: var(--gray-50); border-color: var(--gray-300); }
+
+    /* ─── CARDS ─── */
+    .card {
+      background: #fff; border: 1px solid var(--gray-200); border-radius: 14px; padding: 22px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .card:hover { border-color: var(--sky-200); box-shadow: 0 4px 18px rgba(0,0,0,0.06); }
+
+    .card-grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .card-grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
+
+    .tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; background: var(--sky-50); border: 1px solid var(--sky-100);
+      border-radius: 9999px; font-size: 10px; font-weight: 700; color: var(--sky-700);
+      letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 10px;
+    }
+
+    /* ─── PAIN ─── */
+    .pain-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .pain-item {
+      display: flex; align-items: flex-start; gap: 12px;
+      background: #fff; border: 1px solid var(--gray-200); border-radius: 12px; padding: 16px 18px;
+    }
+    .pain-x {
+      width: 22px; height: 22px; flex-shrink: 0; margin-top: 1px;
+      background: #fff1f2; border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 900; color: #f43f5e;
+    }
+    .pain-item p { font-size: 13px; color: var(--gray-700); line-height: 1.7; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    .callout {
+      background: linear-gradient(135deg, var(--sky-500), var(--blue-600));
+      border-radius: 14px; padding: 22px 26px; color: white;
+      font-size: 14px; line-height: 1.85; font-weight: 500;
+    }
+    .callout strong { font-weight: 900; }
+
+    /* ─── AI DEV OS ─── */
+    .devos-intro {
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      border-radius: 12px; padding: 18px 22px;
+      font-size: 13px; color: var(--gray-600); line-height: 1.85; margin-bottom: 20px;
+    }
+    .devos-quote {
+      background: var(--sky-50); border-left: 3px solid var(--sky-400);
+      border-radius: 0 10px 10px 0; padding: 16px 20px;
+      font-size: 13px; color: var(--gray-700); line-height: 1.8;
+      margin-bottom: 20px; font-style: italic;
+    }
+    .devos-grid { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    .devos-item {
+      display: flex; gap: 14px; align-items: flex-start;
+      background: #fff; border: none; border-radius: 12px; padding: 14px 18px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .devos-item:hover { border-color: var(--sky-200); box-shadow: 0 3px 12px rgba(0,0,0,0.05); }
+    .devos-icon {
+      width: 34px; height: 34px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--sky-50), var(--sky-100));
+      border: 1px solid var(--sky-100); border-radius: 8px;
+      display: flex; align-items: center; justify-content: center; font-size: 15px;
+    }
+    .devos-item h4 { font-size: 13px; font-weight: 700; color: var(--gray-800); margin-bottom: 3px; }
+    .devos-item p { font-size: 12px; color: var(--gray-500); line-height: 1.6; }
+    .devos-note {
+      background: var(--sky-50); border: 1px solid var(--sky-100); border-radius: 10px;
+      padding: 14px 18px; font-size: 13px; color: var(--sky-700); font-weight: 600; text-align: center;
+    }
+
+    /* ─── STEP FLOW ─── */
+    .flow-container { display: flex; flex-direction: column; gap: 0; }
+    .flow-card {
+      background: #fff; border: 1px solid var(--gray-200); border-radius: 16px; padding: 28px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .flow-card:hover { border-color: var(--sky-200); box-shadow: 0 6px 24px rgba(0,0,0,0.06); }
+    .flow-card-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+    .flow-num {
+      width: 36px; height: 36px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--sky-400), var(--blue-500));
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 14px; font-weight: 800;
+    }
+    .flow-card h3 { font-size: 17px; font-weight: 800; color: var(--gray-900); line-height: 1.3; }
+    .flow-card-sub { font-size: 12px; color: var(--sky-600); font-weight: 600; margin-top: 2px; }
+    .flow-body { font-size: 13px; color: var(--gray-600); line-height: 1.8; margin-bottom: 18px; font-weight: 500; }
+
+    .flow-connector {
+      display: flex; align-items: center; justify-content: center;
+      padding: 6px 0; gap: 0; flex-direction: column;
+    }
+    .connector-line { width: 2px; height: 16px; background: linear-gradient(180deg, var(--sky-200), var(--sky-400)); }
+    .connector-label {
+      font-size: 11px; color: var(--gray-400); font-weight: 600; text-align: center;
+      background: var(--gray-50); border: 1px solid var(--gray-200);
+      padding: 4px 12px; border-radius: 9999px; margin: 4px 0;
+    }
+
+    .goal-box {
+      background: var(--sky-50); border: 1px solid var(--sky-100);
+      border-radius: 10px; padding: 14px 18px; margin-bottom: 14px;
+    }
+    .goal-box-label { font-size: 10px; font-weight: 700; color: var(--sky-500); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 6px; }
+    .goal-box p { font-size: 13px; color: var(--sky-800); font-weight: 600; line-height: 1.65; }
+
+    .deliverables { border-top: 1px solid var(--gray-100); padding-top: 14px; margin-top: 4px; }
+    .deliverables-label { font-size: 10px; font-weight: 700; color: var(--gray-400); letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 8px; }
+    .deliverables ul { list-style: none; display: flex; flex-direction: column; gap: 5px; }
+    .deliverables li {
+      font-size: 12px; color: var(--gray-600); padding-left: 18px; position: relative; line-height: 1.55;
+    }
+    .deliverables li::before {
+      content: '✓'; position: absolute; left: 0; top: 0;
+      font-size: 11px; font-weight: 700; color: var(--sky-500);
+    }
+
+    .kpi-row {
+      display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px;
+      border-top: 1px solid var(--gray-100); padding-top: 14px;
+    }
+    .kpi-chip {
+      display: inline-block; padding: 4px 12px;
+      background: var(--gray-100); border-radius: 9999px;
+      font-size: 11px; color: var(--gray-600); font-weight: 600;
+    }
+
+    /* ─── SERVICE DETAIL ─── */
+    .service-section { }
+    .service-flow { display: flex; flex-direction: column; gap: 0; margin-bottom: 20px; }
+    .service-flow-step {
+      display: flex; gap: 14px; align-items: flex-start;
+      padding: 14px 0; border-bottom: 1px solid var(--gray-100);
+    }
+    .service-flow-step:last-child { border-bottom: none; }
+    .service-flow-num {
+      width: 26px; height: 26px; flex-shrink: 0;
+      background: linear-gradient(135deg, var(--sky-400), var(--blue-500));
+      border-radius: 7px; display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 11px; font-weight: 800;
+    }
+    .service-flow-step p { font-size: 13px; color: var(--gray-700); line-height: 1.65; font-weight: 500; }
+
+    .provide-list { list-style: none; display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px; }
+    .provide-list li {
+      font-size: 13px; color: var(--gray-700); padding-left: 18px; position: relative; line-height: 1.65; font-weight: 500;
+    }
+    .provide-list li::before {
+      content: ''; position: absolute; left: 0; top: 9px;
+      width: 8px; height: 2px; background: linear-gradient(90deg, var(--sky-400), var(--blue-500)); border-radius: 9999px;
+    }
+
+    /* ─── CASES ─── */
+    .case-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+    .case-card {
+      background: #fff; border: 1px solid var(--gray-200); border-radius: 14px; padding: 22px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .case-card:hover { border-color: var(--sky-200); box-shadow: 0 4px 18px rgba(0,0,0,0.06); }
+    .case-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+    .case-tag {
+      font-size: 10px; font-weight: 700; color: var(--sky-600);
+      background: var(--sky-50); border: 1px solid var(--sky-100);
+      padding: 2px 9px; border-radius: 9999px; letter-spacing: 0.04em;
+    }
+    .case-card h4 { font-size: 15px; font-weight: 800; color: var(--gray-900); margin-bottom: 10px; line-height: 1.3; }
+    .case-quote {
+      background: var(--gray-50); border-radius: 8px; padding: 12px 14px;
+      font-size: 12px; color: var(--gray-600); line-height: 1.75; margin-bottom: 12px; font-style: italic;
+    }
+    .case-result {
+      display: flex; align-items: flex-start; gap: 8px;
+      background: var(--sky-50); border: 1px solid var(--sky-100);
+      border-radius: 8px; padding: 12px 14px;
+    }
+    .case-arrow { font-size: 13px; font-weight: 900; color: var(--sky-500); flex-shrink: 0; margin-top: 1px; }
+    .case-result p { font-size: 12px; color: var(--sky-800); line-height: 1.7; font-weight: 600; }
+
+    .case-placeholder {
+      background: var(--gray-50); border: 1px dashed var(--gray-300);
+      border-radius: 14px; padding: 28px; text-align: center;
+      font-size: 13px; color: var(--gray-400); font-style: italic; line-height: 1.7;
+    }
+
+    /* ─── TEAM ─── */
+    .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+    .member-card {
+      background: #fff; border: 1px solid var(--gray-200); border-radius: 16px; overflow: hidden;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .member-card:hover { border-color: var(--sky-200); box-shadow: 0 6px 24px rgba(0,0,0,0.06); }
+    .member-photo-wrap { height: 200px; overflow: hidden; background: var(--gray-100); }
+    .member-photo { width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block; transition: transform 0.4s; }
+    .member-card:hover .member-photo { transform: scale(1.04); }
+    .member-body { padding: 18px 20px 22px; }
+    .member-role-tag {
+      display: inline-block; background: var(--sky-50); border: 1px solid var(--sky-100);
+      color: var(--sky-700); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.06em; padding: 2px 10px; border-radius: 9999px; margin-bottom: 8px;
+    }
+    .member-name { font-size: 18px; font-weight: 800; color: var(--gray-900); margin-bottom: 2px; line-height: 1.2; }
+    .member-name-en { font-size: 11px; color: var(--gray-400); letter-spacing: 0.06em; margin-bottom: 10px; font-family: "Inter", sans-serif; }
+    .member-desc { font-size: 12px; color: var(--gray-600); line-height: 1.7; margin-bottom: 12px; }
+    .member-career { list-style: none; border-top: 1px solid var(--gray-100); padding-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+    .member-career li { font-size: 11px; color: var(--gray-400); padding-left: 14px; position: relative; line-height: 1.55; }
+    .member-career li::before {
+      content: ''; position: absolute; left: 0; top: 7px;
+      width: 6px; height: 1.5px; background: var(--sky-300); border-radius: 9999px;
+    }
+
+    /* ─── SUMMARY ─── */
+    .summary-box {
+      background: linear-gradient(135deg, var(--sky-500), var(--blue-600));
+      border-radius: 18px; padding: 36px; color: white; position: relative; overflow: hidden;
+    }
+    .summary-box::before {
+      content: ''; position: absolute; top: -60px; right: -60px;
+      width: 160px; height: 160px; background: rgba(255,255,255,0.1);
+      border-radius: 9999px; filter: blur(30px);
+    }
+    .summary-box-inner { position: relative; z-index: 1; }
+    .summary-box h3 { font-size: 18px; font-weight: 900; line-height: 1.35; margin-bottom: 14px; }
+    .summary-box p { font-size: 13px; color: rgba(255,255,255,0.88); line-height: 1.85; margin-bottom: 10px; }
+    .summary-box p:last-of-type { margin-bottom: 0; }
+
+    /* ─── RESPONSIVE ─── */
+    @media (max-width: 1024px) {
+      .sidebar {
+        position: fixed; top: 0; left: 0; height: 100vh; z-index: 50;
+        transform: translateX(-100%); transition: transform 0.25s ease;
+      }
+      .sidebar.open { transform: translateX(0); }
+      .mobile-header { display: flex; }
+      .content { padding: 28px 24px 64px; }
+    }
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 24px; }
+      .case-grid, .team-grid { grid-template-columns: 1fr; }
+      .content { padding: 20px 16px 56px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+
+  <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <a href="#hero" class="sidebar-logo" onclick="closeSidebar()">
+      <img src="images/ai-jedi-logo.png" alt="AI JEDI" style="width:36px;height:36px;object-fit:contain;border-radius:8px;">
+      <div>
+        <div class="logo-name">AI JEDI</div>
+        <div class="logo-sub">AI Implementation</div>
+      </div>
+    </a>
+
+    <nav class="sidebar-nav">
+      <a class="nav-item active" href="#hero" onclick="setActive(this);closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 2"/></svg>
+        概要
+      </a>
+
+      <div class="nav-label">コンテンツ</div>
+
+      <a class="nav-item" href="#pain" onclick="setActive(this);closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2v6M8 12v.5"/><circle cx="8" cy="8" r="6"/></svg>
+        課題提起
+      </a>
+      <a class="nav-item" href="#devos" onclick="setActive(this);closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 6l4-4 4 4M4 10l4 4 4-4"/></svg>
+        AI Dev OS
+      </a>
+      <a class="nav-item" href="#flow" onclick="setActive(this);closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 8h12M8 2l6 6-6 6"/></svg>
+        3つの軸
+      </a>
+
+      <div class="nav-label">各サービス</div>
+
+      <a class="nav-item" href="#step1" onclick="setActive(this);closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M5 7h6M5 10h4"/></svg>
+        研修・人材育成
+        <span class="step-badge">STEP 1</span>
+      </a>
+      <a class="nav-item" href="#step2" onclick="setActive(this);closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 12l4-8 3 5 2-3 3 6"/></svg>
+        受託開発
+        <span class="step-badge">STEP 2</span>
+      </a>
+      <a class="nav-item" href="#step3" onclick="setActive(this);closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M2 13c0-2 1.8-3 4-3s4 1.5 4 3"/><path d="M11 9.5c1.7 0 3 1.2 3 2.7"/></svg>
+        FDE人材投入
+        <span class="step-badge">STEP 3</span>
+      </a>
+
+      <div class="nav-label">組織</div>
+      <a class="nav-item" href="#team" onclick="setActive(this);closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="6" cy="5" r="2"/><circle cx="11" cy="5" r="2"/><path d="M2 13c0-2 1.8-3 4-3s4 1.5 4 3"/><path d="M11 9.5c1.7 0 3 1.2 3 2.7"/></svg>
+        チーム
+      </a>
+      <a class="nav-item" href="#summary" onclick="setActive(this);closeSidebar()">
+        <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 8h10M3 5h6M3 11h8"/></svg>
+        まとめ
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <div class="footer-dot"></div>
+      AI JEDI Inc. — 2026
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main">
+    <header class="mobile-header">
+      <button class="mobile-menu-btn" onclick="openSidebar()">
+        <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M3 5h12M3 9h12M3 13h12"/></svg>
+      </button>
+      <img src="images/ai-jedi-logo.png" alt="AI JEDI" style="width:26px;height:26px;object-fit:contain;border-radius:6px;">
+      <span style="font-weight:700;font-size:13px;color:var(--gray-900);">AI JEDI</span>
+    </header>
+
+    <div class="content">
+
+      <!-- ■ HERO -->
+      <section class="hero doc-section" id="hero">
+        <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(0,0,0,0.15);color:#333;font-size:11px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:5px 12px;border-radius:999px;margin-bottom:16px;">
+          <span style="width:6px;height:6px;background:#27272a;border-radius:50%;display:inline-block;"></span>
+          AI Implementation Partner
+        </div>
+        <div style="margin-bottom:18px;">
+          <img src="images/ai-jedi-logo.png" alt="AI JEDI" style="width:720px;max-width:100%;height:auto;object-fit:contain;display:block;">
+        </div>
+        <p style="font-size:clamp(18px,2.4vw,26px);font-weight:800;color:var(--gray-800);letter-spacing:-0.01em;margin-bottom:18px;">AIを、組織に実装する。</p>
+        <p class="hero-subcopy">AI人材を入れるだけでは、組織は変わりません。</p>
+        <div class="hero-overview">
+          AI JEDIは、AI活用の導入から内製化までを一気通貫で支援するAI実装パートナーです。研修で型を導入し、受託開発で実プロジェクトに適用し、FDE人材投入で運用・内製化まで完成させる。この3ステップを、共通基盤「AI Dev OS」でつなぎ、人だけでなく「動く環境と型」ごと組織に納品します。
+        </div>
+        <div class="hero-actions">
+          <a href="#flow" class="btn-primary">
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 6.5h9M6.5 2l4.5 4.5L6.5 11"/></svg>
+            3つの軸を見る
+          </a>
+          <a href="#devos" class="btn-secondary">AI Dev OS とは</a>
+        </div>
+      </section>
+
+      <!-- ■ PAIN -->
+      <section class="doc-section" id="pain">
+        <div class="eyebrow">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="5.5" cy="5.5" r="4.5"/><path d="M5.5 3.5v2.5"/><circle cx="5.5" cy="7.5" r=".5" fill="currentColor"/></svg>
+          Challenge
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+          <h2 class="section-title" style="margin-bottom:0;">こんな状況、心当たりはありませんか？</h2>
+          <img src="images/pain-illustration.png" alt="" style="width:80px;height:auto;flex-shrink:0;margin-bottom:6px;">
+        </div>
+
+        <div class="pain-list">
+          <div class="pain-item">
+            <div class="pain-x">✗</div>
+            <p>外部のAIエンジニアに任せたが成果が出ず、結局自社エンジニアが対応している</p>
+          </div>
+          <div class="pain-item">
+            <div class="pain-x">✗</div>
+            <p>試作・PoCはできるが、本番に上がらない</p>
+          </div>
+          <div class="pain-item">
+            <div class="pain-x">✗</div>
+            <p>研修を実施したが、現場では誰も動けていない</p>
+          </div>
+          <div class="pain-item">
+            <div class="pain-x">✗</div>
+            <p>特定の担当者に依存し、チームに技術が広がらない</p>
+          </div>
+        </div>
+
+        <div class="callout">
+          根本原因は<strong>「仕組み」がないこと</strong>です。<br>
+          AI JEDIは、人を入れるだけでなく「動く環境と型」をセットで組織に渡すことで、これらを同時に解消します。
+        </div>
+      </section>
+
+      <hr class="doc-divider">
+
+      <!-- ■ AI DEV OS -->
+      <section class="doc-section" id="devos">
+        <div class="eyebrow">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 4.5l2.5-2.5 2.5 2.5M3 6.5l2.5 2.5 2.5-2.5"/></svg>
+          AI Dev OS
+        </div>
+        <h2 class="section-title">他社との決定的な違い</h2>
+
+        <div class="devos-quote">
+          研修は受けた。しかし終わった翌日、現場には何も変わった環境がない。使える型もない。学んだことを実業務に落とし込む手段がなく、気づけば元の開発スタイルに戻っている。<br><br>
+          外部エンジニアを入れた。しかし動いているのはその人だけで、チームには何も移転されない。担当者が抜けた瞬間、開発が止まる。
+        </div>
+
+        <p style="font-size:22px;color:#e11d48;font-weight:800;margin-bottom:16px;">AI JEDIは、この構造ごと変えます。</p>
+        <p style="font-size:13px;color:var(--gray-600);line-height:1.8;margin-bottom:20px;">AI Dev OSを核に、研修・受託開発・FDE投入の3つの軸が導入→適用→運用の順で機能します。</p>
+
+        <div style="background:var(--gray-600);border-radius:14px;padding:20px 22px 16px;margin-bottom:20px;">
+          <p style="font-size:11px;font-weight:800;color:rgba(255,255,255,0.5);letter-spacing:0.14em;text-transform:uppercase;margin-bottom:14px;">AI Dev OS</p>
+          <div class="devos-grid">
+            <div class="devos-item">
+              <div class="devos-icon">📁</div>
+              <div>
+                <h4>開発スターターリポジトリ</h4>
+                <p>すぐ動き始められるテンプレ一式</p>
+              </div>
+            </div>
+            <div class="devos-item">
+              <div class="devos-icon">📋</div>
+              <div>
+                <h4>AI駆動開発プレイブック</h4>
+                <p>AIと人間の役割分担・手順を標準化</p>
+              </div>
+            </div>
+            <div class="devos-item">
+              <div class="devos-icon">🤖</div>
+              <div>
+                <h4>サブエージェント設計</h4>
+                <p>仕様〜リリースまでの型を固定</p>
+              </div>
+            </div>
+            <div class="devos-item">
+              <div class="devos-icon">⚙️</div>
+              <div>
+                <h4>GitHub運用テンプレ</h4>
+                <p>レビュー・CI・品質ゲートの最小セット</p>
+              </div>
+            </div>
+            <div class="devos-item">
+              <div class="devos-icon">🔒</div>
+              <div>
+                <h4>ガバナンス雛形</h4>
+                <p>PoC→本番に上げるチェックリスト</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="devos-note">
+          研修→受託開発→FDE投入の3ステップを貫く共通基盤。<br><strong>人だけでなく「動く環境と型」ごと、組織に実装されます。</strong>
+        </div>
+      </section>
+
+      <hr class="doc-divider">
+
+      <!-- ■ FLOW -->
+      <section class="doc-section" id="flow">
+        <div class="eyebrow">
+          <svg width="11" height="11" viewBox="0 0 11 11" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 5.5h7M5.5 2l3.5 3.5L5.5 9"/></svg>
+          3 Steps
+        </div>
+        <h2 class="section-title">導入から内製化まで、一本の導線</h2>
+        <p class="section-lead">3つの軸は独立したサービスではありません。共通のAI Dev OSを土台に、顧客を次のフェーズへ自然に引き上げる成長導線として設計されています。</p>
+
+        <div class="flow-container">
+          <!-- STEP 1 -->
+          <div class="flow-card">
+            <div class="flow-card-header">
+              <div class="flow-num">1</div>
+              <div>
+                <h3>研修・人材育成</h3>
+                <div class="flow-card-sub">AI Dev OSをチームへインストールする［導入］</div>
+              </div>
+            </div>
+            <p class="flow-body">対象はDX部門・事業部の混成チーム（非エンジニア可）。<br>基礎・実践・環境構築の3段階で、期間は2〜4週間。</p>
+            <div class="goal-box">
+              <div class="goal-box-label">ゴール</div>
+              <p>チームが共通の型で動き始めている状態</p>
+            </div>
+            <div class="deliverables">
+              <div class="deliverables-label">得られる成果物</div>
+              <ul>
+                <li>AI Dev OS一式（開発環境・テンプレ・運用手順）</li>
+                <li>モックプロトタイプ</li>
+                <li>研修後すぐ動き出せる開発環境</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="flow-connector">
+            <div class="connector-line"></div>
+            <div class="connector-label">業務課題が明確になったチームを次へ接続</div>
+            <div class="connector-line"></div>
+          </div>
+
+          <!-- STEP 2 -->
+          <div class="flow-card">
+            <div class="flow-card-header">
+              <div class="flow-num">2</div>
+              <div>
+                <h3>受託開発</h3>
+                <div class="flow-card-sub">研修で導入した型を、実プロジェクトへ適用する［適用］</div>
+              </div>
+            </div>
+            <p class="flow-body">AI駆動により、従来の受託開発では数週間〜数ヶ月かかる試作を最短1〜2週間で納品。<br>顧客の不確実性(要件 / 業務 / セキュリティ)をモックで潰すことで、意思決定のスピードが根本から変化。</p>
+            <div class="goal-box">
+              <div class="goal-box-label">ゴール</div>
+              <p>社内合意が取れ、本開発への投資判断が完了している状態</p>
+            </div>
+            <div class="deliverables">
+              <div class="deliverables-label">得られる成果物</div>
+              <ul>
+                <li>触れて確認できるUIモックアップ</li>
+                <li>業務フロー・簡易評価レポート</li>
+                <li>技術方針・本開発ロードマップ</li>
+                <li>ガバナンス・運用設計ドキュメント</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="flow-connector">
+            <div class="connector-line"></div>
+            <div class="connector-label">本開発が動き始めたタイミングで接続</div>
+            <div class="connector-line"></div>
+          </div>
+
+          <!-- STEP 3 -->
+          <div class="flow-card">
+            <div class="flow-card-header">
+              <div class="flow-num">3</div>
+              <div>
+                <h3>FDE人材投入</h3>
+                <div class="flow-card-sub">FDE＋AI Dev OS＋運用プレイブックをユニットで投入する［運用］</div>
+              </div>
+            </div>
+            <p class="flow-body">FDEアサインと現場投入（月次契約）。初週からIssue・PR・レビュー・CIを整備し、AI駆動作法をチームへインストール。KPI共有と内製化までの伴走。</p>
+            <div class="goal-box">
+              <div class="goal-box-label">ゴール</div>
+              <p>担当者が変わっても品質が落ちない仕組みが組織に定着し、内製化が完了している状態</p>
+            </div>
+            <div class="deliverables">
+              <div class="deliverables-label">得られる成果物</div>
+              <ul>
+                <li>AI駆動開発が自走するチーム体制</li>
+                <li>運用プレイブック（組織に残る再現性ある型）</li>
+                <li>内製化完了までのKPIレポート</li>
+              </ul>
+            </div>
+            <div class="kpi-row">
+              <span class="kpi-chip">リードタイム短縮</span>
+              <span class="kpi-chip">PR回転数向上</span>
+              <span class="kpi-chip">手戻り率低下</span>
+              <span class="kpi-chip">PoC→本番移行率</span>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <hr class="doc-divider">
+
+      <!-- ■ STEP 1 DETAIL -->
+      <section class="doc-section" id="step1">
+        <div class="eyebrow">STEP 1 — 研修・人材育成</div>
+        <h2 class="section-title">AI駆動開発の型を、チームごとインストールする</h2>
+        <p class="section-lead">座学で終わらせません。研修の成果物としてAI Dev OS一式を納品し、終了後すぐに現場が動き出す状態を作ります。</p>
+
+        <div class="card" style="margin-bottom:14px; background: linear-gradient(135deg, #f4f4f5 0%, #e4e4e7 100%); border-left: 3px solid #27272a;">
+          <div class="tag" style="background:#e4e4e7; color:#18181b;">役割</div>
+          <p style="font-size:14px; font-weight:600; color:#18181b; margin:8px 0 0; line-height:1.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">AI駆動開発の「型」と「環境」を、チームごとインストールして実業務に直結させる</p>
+        </div>
+
+        <div class="card" style="margin-bottom:14px;">
+          <div class="tag">提供内容</div>
+          <ul class="provide-list">
+            <li>基礎：生成AIの活用・プロンプト設計・業務への適用</li>
+            <li>実践：AI駆動開発の型・GitHub運用・レビュープロセス</li>
+            <li>環境構築：AI Dev OS導入・チームへのインストール</li>
+          </ul>
+          <div style="font-size:12px;color:var(--gray-500);font-weight:600;">期間：2〜4週間</div>
+        </div>
+
+        <div class="card" style="margin-bottom:14px;">
+          <div class="tag">研修後の顧客の姿</div>
+          <p style="font-size:13px;color:var(--gray-700);line-height:1.8;">チームが共通の型で動き始めており、次の業務課題をAIで解く準備が整っている。研修成果物の開発環境がそのまま本開発に使える状態。</p>
+        </div>
+
+        <div class="deliverables" style="border-top:none;padding-top:0;margin-bottom:28px;">
+          <div class="deliverables-label">得られる成果物</div>
+          <ul>
+            <li>AI Dev OS一式（開発環境・テンプレ・運用手順）</li>
+            <li>モックプロトタイプ</li>
+            <li>研修後すぐ動き出せる開発環境</li>
+          </ul>
+        </div>
+
+        <div class="eyebrow" style="margin-bottom:12px;">事例</div>
+        <div class="case-placeholder">
+          事例①・②：企業名・業種・課題・成果<br>（後から追記予定）
+        </div>
+      </section>
+
+      <hr class="doc-divider">
+
+      <!-- ■ STEP 2 DETAIL -->
+      <section class="doc-section" id="step2">
+        <div class="eyebrow">STEP 2 — 受託開発</div>
+        <h2 class="section-title">「触れるモック」を最短納品し、意思決定を加速させる</h2>
+        <p class="section-lead">まずモックで要件の不確実性を潰します。AI駆動により最短1〜2週間で納品。確度が上がった状態で本開発へ移行するため、手戻りが起きません。</p>
+
+        <div class="card" style="margin-bottom:14px; background: linear-gradient(135deg, #f4f4f5 0%, #e4e4e7 100%); border-left: 3px solid #27272a;">
+          <div class="tag" style="background:#e4e4e7; color:#18181b;">役割</div>
+          <p style="font-size:14px; font-weight:600; color:#18181b; margin:8px 0 0; line-height:1.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">顧客の不確実性（要件 / 業務 / セキュリティ）を、モックで潰して投資判断を前倒し</p>
+        </div>
+
+        <div class="card" style="margin-bottom:14px;">
+          <div class="tag">提供の流れ</div>
+          <div class="service-flow">
+            <div class="service-flow-step">
+              <div class="service-flow-num">①</div>
+              <p>AIモックスプリント（最短1〜2週）</p>
+            </div>
+            <div class="service-flow-step">
+              <div class="service-flow-num">②</div>
+              <p>技術方針・次フェーズ見積を提示</p>
+            </div>
+            <div class="service-flow-step">
+              <div class="service-flow-num">③</div>
+              <p>本開発・段階導入</p>
+            </div>
+            <div class="service-flow-step">
+              <div class="service-flow-num">④</div>
+              <p>ガバナンス・運用設計まで定着</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:14px;">
+          <div class="tag">開発後の顧客の姿</div>
+          <p style="font-size:13px;color:var(--gray-700);line-height:1.8;">触れるモックで社内合意が取れており、本開発への投資判断が完了している。ガバナンスと運用設計が整い、PoC止まりにならない基盤ができている。</p>
+        </div>
+
+        <div class="deliverables" style="border-top:none;padding-top:0;margin-bottom:28px;">
+          <div class="deliverables-label">得られる成果物</div>
+          <ul>
+            <li>触れて確認できるUIモックアップ</li>
+            <li>業務フロー・簡易評価レポート</li>
+            <li>技術方針・本開発ロードマップ</li>
+            <li>ガバナンス・運用設計ドキュメント</li>
+          </ul>
+        </div>
+
+        <div class="eyebrow" style="margin-bottom:14px;">事例</div>
+        <div style="display:flex;flex-direction:column;gap:16px;">
+
+          <!-- 事例1: 苗マネ -->
+          <div class="case-card">
+            <!-- 1行目: タグ -->
+            <div class="case-tags" style="justify-content:center;margin-bottom:10px;">
+              <span class="case-tag">農業DX</span>
+              <span class="case-tag">業務効率化</span>
+              <span class="case-tag">在庫管理</span>
+            </div>
+            <!-- 2行目: タイトル（中央揃え・大きめ） -->
+            <h4 style="font-size:20px;font-weight:800;color:var(--gray-900);line-height:1.3;text-align:center;margin-bottom:16px;">苗マネ — 煩雑な農園管理を、スマホひとつで完結。</h4>
+            <!-- 3行目: 引用 ＋ 成果 横並び -->
+            <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px;">
+              <div class="case-quote" style="flex:1;margin:0;">「紙面上で行う雑多なメモでの在庫管理に限界を感じている。計算も狂ってくるから結局管理もずさんに。現場のみんなが迷わず使える、シンプルなアプリが欲しいんです。」</div>
+              <div class="case-result" style="flex:1;">
+                <div class="case-arrow">→</div>
+                <p>2日後に納品。種まき登録・出荷管理・在庫状況・出荷予定表をひとつのダッシュボードで管理できるモックアップを実現。</p>
+              </div>
+            </div>
+            <!-- 4行目: iframe -->
+            <div style="border-radius:10px;overflow:hidden;border:1px solid var(--gray-200);">
+              <iframe src="https://nae-match-355576675286.us-west1.run.app/" width="100%" height="520" style="display:block;border:none;" loading="lazy" title="苗マネ"></iframe>
+            </div>
+          </div>
+
+          <!-- 事例2: PaintVision -->
+          <div class="case-card">
+            <!-- 1行目: タグ -->
+            <div class="case-tags" style="justify-content:center;margin-bottom:10px;">
+              <span class="case-tag">建設DX</span>
+              <span class="case-tag">ARシミュレーション</span>
+              <span class="case-tag">画像処理</span>
+            </div>
+            <!-- 2行目: タイトル（中央揃え・大きめ） -->
+            <h4 style="font-size:20px;font-weight:800;color:var(--gray-900);line-height:1.3;text-align:center;margin-bottom:16px;">PaintVision — 家の壁色、スマホで着せ替え。</h4>
+            <!-- 3行目: 引用 ＋ 成果 横並び -->
+            <div style="display:flex;gap:14px;align-items:flex-start;margin-bottom:16px;">
+              <div class="case-quote" style="flex:1;margin:0;">「お客様との色決めに時間がかかりすぎる。その場で『こんな感じです』と見せられるツールがあれば、もっとスムーズになるのに。」</div>
+              <div class="case-result" style="flex:1;">
+                <div class="case-arrow">→</div>
+                <p>翌日に納品。BEFORE/AFTERをスライダーで比較できるUIを実現。複数の配色パターンをワンタップで切り替えられるモックアップを納品。</p>
+              </div>
+            </div>
+            <!-- 4行目: iframe -->
+            <div style="border-radius:10px;overflow:hidden;border:1px solid var(--gray-200);">
+              <iframe src="https://paintvision-355576675286.us-west1.run.app/" width="100%" height="520" style="display:block;border:none;" loading="lazy" title="PaintVision"></iframe>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <hr class="doc-divider">
+
+      <!-- ■ STEP 3 DETAIL -->
+      <section class="doc-section" id="step3">
+        <div class="eyebrow">STEP 3 — FDE人材投入・内製化</div>
+        <h2 class="section-title">人と仕組みをセットで現場に投入し、内製化まで完成させる</h2>
+        <p class="section-lead">FDE（Field Deployment Engineer）は、現場に入り込みプロジェクトを前に進める実装型エンジニアです。AI Dev OSと運用プレイブックをセットで持ち込み、チームの自走を支援します。</p>
+
+        <div class="card" style="margin-bottom:14px; background: linear-gradient(135deg, #f4f4f5 0%, #e4e4e7 100%); border-left: 3px solid #27272a;">
+          <div class="tag" style="background:#e4e4e7; color:#18181b;">役割</div>
+          <p style="font-size:14px; font-weight:600; color:#18181b; margin:8px 0 0; line-height:1.7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">FDE＋AI Dev OSをユニットで現場に投入し、チームの自走体制と内製化を完成させる</p>
+        </div>
+
+        <div class="card" style="margin-bottom:14px;">
+          <div class="tag">提供内容</div>
+          <ul class="provide-list">
+            <li>FDEアサインと現場投入（月次契約）</li>
+            <li>初週からIssue・PR・レビュー・CIを整備し実装成果を提供</li>
+            <li>AI駆動作法のチームへのインストール（レビュー会・ペア作業）</li>
+            <li>KPI共有と内製化までの伴走</li>
+          </ul>
+        </div>
+
+        <div class="card" style="margin-bottom:14px;">
+          <div class="tag">FDE投入後の顧客の姿</div>
+          <p style="font-size:13px;color:var(--gray-700);line-height:1.8;">個人のスキルに依存せず、チーム全体でAI駆動開発が回っている。担当者が変わっても品質が落ちない仕組みが組織に定着し、内製化が完了している。</p>
+        </div>
+
+        <div class="deliverables" style="border-top:none;padding-top:0;margin-bottom:14px;">
+          <div class="deliverables-label">得られる成果物</div>
+          <ul>
+            <li>AI駆動開発が自走するチーム体制</li>
+            <li>運用プレイブック（組織に残る再現性ある型）</li>
+            <li>内製化完了までのKPIレポート</li>
+          </ul>
+        </div>
+
+        <div class="kpi-row" style="margin-top:0;border-top:none;padding-top:0;margin-bottom:28px;">
+          <span class="kpi-chip">リードタイム短縮</span>
+          <span class="kpi-chip">PR回転数向上</span>
+          <span class="kpi-chip">手戻り率低下</span>
+          <span class="kpi-chip">PoC→本番移行率</span>
+        </div>
+
+        <div class="eyebrow" style="margin-bottom:12px;">事例</div>
+        <div class="case-placeholder">
+          事例①・②：企業名・業種・課題・成果<br>（後から追記予定）
+        </div>
+      </section>
+
+      <hr class="doc-divider">
+
+      <!-- ■ TEAM -->
+      <section class="doc-section" id="team">
+        <div class="eyebrow">Team</div>
+        <h2 class="section-title">チーム</h2>
+        <p class="section-lead">投資・事業・技術の三軸で、エンタープライズのAI実装を推進します。</p>
+
+        <div class="team-grid">
+          <div class="member-card">
+            <div class="member-photo-wrap">
+              <img class="member-photo" src="images/member-kogawa.png" alt="古川 靖久" loading="lazy" style="object-fit:cover; object-position:center 10%;">
+            </div>
+            <div class="member-body">
+              <div class="member-role-tag">CEO / 代表取締役</div>
+              <div class="member-name">古川 靖久</div>
+              <div class="member-name-en">Yasuhiko Kogawa</div>
+              <p class="member-desc">資本政策・ファイナンス・アライアンスを担当。大型連携・投資家対応から事業のスケールを設計する。</p>
+              <ul class="member-career">
+                <li>2012年〜 エンジェル投資家として活動</li>
+                <li>2018年〜 株式会社ジビジョン 代表取締役</li>
+                <li>2024年〜 適格機関投資家（金融庁登録）</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="member-card">
+            <div class="member-photo-wrap">
+              <img class="member-photo" src="images/member-sakamoto.png" alt="坂本 龍史" loading="lazy">
+            </div>
+            <div class="member-body">
+              <div class="member-role-tag">COO / 代表取締役</div>
+              <div class="member-name">坂本 龍史</div>
+              <div class="member-name-en">Ryuji Sakamoto</div>
+              <p class="member-desc">エンタープライズ営業・パートナー開拓を担当。NTT DATA連携をはじめ顧客基盤の拡大を主導。</p>
+              <ul class="member-career">
+                <li>2019年〜 イグニション・ポイント株式会社</li>
+                <li>2022年〜 株式会社ユーザベース</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="member-card">
+            <div class="member-photo-wrap">
+              <img class="member-photo" src="images/member-nishiyama.png" alt="西山 泰仙" loading="lazy" style="object-fit:cover; object-position:center 30%;">
+            </div>
+            <div class="member-body">
+              <div class="member-role-tag">CTO / プロジェクト責任者</div>
+              <div class="member-name">西山 泰仙</div>
+              <div class="member-name-en">Taisen Nishiyama</div>
+              <p class="member-desc">技術戦略・品質担保・AI Dev OS整備・FDE人材の目利きと育成を担当。エンタープライズ現場での実装経験を核に技術を設計。</p>
+              <ul class="member-career">
+                <li>2023年〜 株式会社TierMind 代表取締役</li>
+                <li>2024年〜 TOYOTA Connected AI/スキリング責任者</li>
+                <li>2025年〜 株式会社worth CAIO</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <hr class="doc-divider">
+
+      <!-- ■ SUMMARY -->
+      <section class="doc-section" id="summary">
+        <div class="eyebrow">まとめ</div>
+        <h2 class="section-title" style="margin-bottom:24px;">AI JEDIが提供するのは、サービスの組み合わせではありません。</h2>
+
+        <div class="summary-box">
+          <div class="summary-box-inner">
+            <h3>研修でAI Dev OSを組織に導入し、<br>受託開発で実プロジェクトに適用し、<br>FDE投入で運用・内製化まで完成させる。</h3>
+            <p>この一本の導線を通じて、「AIが当たり前に使われている組織」を作ることが、私たちの仕事です。</p>
+            <p>どのステップからでも始められます。まずは貴社の現状と課題をお聞かせください。</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  function openSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('sidebar-overlay').classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('sidebar-overlay').classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function setActive(el) {
+    document.querySelectorAll('.nav-item').forEach(a => a.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  // Scroll spy
+  const sections = document.querySelectorAll('.doc-section[id]');
+  const navItems = document.querySelectorAll('.nav-item[href^="#"]');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const id = entry.target.id;
+        navItems.forEach(item => {
+          item.classList.toggle('active', item.getAttribute('href') === `#${id}`);
+        });
+      }
+    });
+  }, { threshold: 0.25 });
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>

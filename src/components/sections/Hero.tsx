@@ -1,83 +1,74 @@
 import { motion } from 'framer-motion'
-import { ArrowRight, Play } from 'lucide-react'
-import { Link } from 'react-router-dom'
-import { GridBackground } from '@/components/ui/GridBackground'
-import { heroIllustration } from '@/data/illustrations'
 
 export function Hero() {
   return (
-    <section className="relative -mx-6 sm:-mx-10 -mt-10 lg:-mt-16 px-6 sm:px-10 pt-20 pb-24 overflow-hidden">
-      <GridBackground />
-
-      <div className="relative z-10 flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
-        <div className="flex-1 space-y-8">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1, duration: 0.4 }}
-          >
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-sm font-semibold bg-accent-50 text-accent-600 border border-accent-100">
-              <span className="w-2 h-2 rounded-full bg-accent-500 animate-pulse" />
-              AI時代の事業実装パートナー
-            </span>
-          </motion.div>
-
-          <motion.h1
-            className="text-4xl sm:text-5xl lg:text-6xl font-black text-gray-900 leading-[1.15] tracking-tight"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-          >
-            AIを、
-            <br />
-            <span className="text-gradient">事業成果</span>に変える。
-          </motion.h1>
-
-          <motion.p
-            className="text-lg sm:text-xl text-gray-600 leading-relaxed max-w-2xl"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3, duration: 0.5 }}
-          >
-            企画から実装、研修、運用、人材、顧問まで——
-            <br className="hidden sm:block" />
-            AI JEDIは、企業がAIを事業成果につなげるために
-            <br className="hidden sm:block" />
-            必要な機能を、<strong className="text-gray-900">実装責任まで持って</strong>提供します。
-          </motion.p>
-
-          <motion.div
-            className="flex flex-wrap gap-4"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4, duration: 0.5 }}
-          >
-            <Link
-              to="/services/strategy"
-              className="group inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl bg-gray-900 text-white text-base font-bold hover:bg-gray-800 transition-colors shadow-lg shadow-gray-900/20"
-            >
-              <Play size={16} />
-              事業内容を見る
-              <ArrowRight size={16} className="transition-transform group-hover:translate-x-1" />
-            </Link>
-            <Link
-              to="/contact"
-              className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl border-2 border-gray-200 text-gray-700 text-base font-semibold hover:bg-gray-50 hover:border-gray-300 transition-all"
-            >
-              お問い合わせ
-            </Link>
-          </motion.div>
+    <section className="doc-section pt-2 pb-14 border-b border-gray-100 mb-14" id="hero">
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4 }}
+      >
+        <div className="inline-flex items-center gap-1.5 bg-gray-100 text-gray-500 text-[11px] font-semibold tracking-[0.1em] uppercase px-3 py-1.5 rounded-full mb-5">
+          <span className="w-1.5 h-1.5 bg-gray-600 rounded-full inline-block" />
+          AI Implementation Partner
         </div>
+      </motion.div>
 
-        <motion.div
-          className="shrink-0 w-full max-w-xs sm:max-w-sm lg:max-w-md"
-          initial={{ opacity: 0, scale: 0.9, x: 30 }}
-          animate={{ opacity: 1, scale: 1, x: 0 }}
-          transition={{ delay: 0.3, duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+      <motion.div
+        className="mb-7"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1, duration: 0.5 }}
+      >
+        <img
+          src="/images/ai-jedi-logo.png"
+          alt="AI JEDI"
+          className="w-full max-w-[720px] h-auto block"
+        />
+      </motion.div>
+
+      <motion.h1
+        className="text-[clamp(26px,3.5vw,40px)] font-extrabold text-gray-800 tracking-tight leading-[1.2] mb-5"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.5 }}
+      >
+        AIを、組織に実装する。
+      </motion.h1>
+
+      <motion.p
+        className="text-[clamp(15px,1.8vw,18px)] text-gray-500 font-normal leading-[1.75] max-w-[560px] mb-10"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3, duration: 0.5 }}
+      >
+        人を入れるだけでは、組織は変わりません。<br />
+        AI JEDIは「動く環境と型」ごと組織に納品する、<br />
+        AI実装パートナーです。
+      </motion.p>
+
+      <motion.div
+        className="flex gap-3 flex-wrap"
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.4, duration: 0.5 }}
+      >
+        <a
+          href="#services"
+          onClick={(e) => { e.preventDefault(); document.querySelector('#services')?.scrollIntoView({ behavior: 'smooth' }) }}
+          className="inline-flex items-center gap-2 px-6 py-3 bg-gray-800 text-white rounded-xl text-[14px] font-semibold shadow-md shadow-black/10 hover:-translate-y-px hover:shadow-lg transition-all no-underline"
         >
-          <img src={heroIllustration} alt="" className="w-full h-auto" />
-        </motion.div>
-      </div>
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" strokeWidth="1.8"><path d="M2 6.5h9M6.5 2l4.5 4.5L6.5 11"/></svg>
+          サービスを見る
+        </a>
+        <a
+          href="#devos"
+          onClick={(e) => { e.preventDefault(); document.querySelector('#devos')?.scrollIntoView({ behavior: 'smooth' }) }}
+          className="inline-flex items-center gap-2 px-6 py-3 bg-white text-gray-600 border border-gray-200 rounded-xl text-[14px] font-medium hover:bg-gray-50 hover:border-gray-300 transition-all no-underline"
+        >
+          AI Dev OS とは
+        </a>
+      </motion.div>
     </section>
   )
 }

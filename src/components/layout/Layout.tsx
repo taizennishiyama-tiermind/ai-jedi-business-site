@@ -1,16 +1,7 @@
-import { useState, useCallback } from 'react'
-import { useLocation, Link } from 'react-router-dom'
+import { useState, useCallback, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Home, Target, Zap, GraduationCap, Rocket, Users, Shield, RefreshCw,
-  HelpCircle, Mail, Menu, PanelLeftClose, PanelLeft,
-} from 'lucide-react'
+import { Menu } from 'lucide-react'
 import { navigation } from '@/data/navigation'
-
-const iconMap: Record<string, React.ElementType> = {
-  Home, Target, Zap, GraduationCap, Rocket, Users, Shield, RefreshCw,
-  HelpCircle, Mail,
-}
 
 interface LayoutProps {
   readonly children: React.ReactNode
@@ -18,77 +9,75 @@ interface LayoutProps {
 
 export function Layout({ children }: LayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-  const location = useLocation()
+  const [activeId, setActiveId] = useState('hero')
 
   const closeMobile = useCallback(() => setSidebarOpen(false), [])
-  const toggleCollapse = useCallback(() => setSidebarCollapsed((p) => !p), [])
+
+  useEffect(() => {
+    const sections = document.querySelectorAll<HTMLElement>('.doc-section[id]')
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setActiveId(entry.target.id)
+          }
+        }
+      },
+      { threshold: 0.25, rootMargin: '-80px 0px -50% 0px' }
+    )
+    sections.forEach((s) => observer.observe(s))
+    return () => observer.disconnect()
+  }, [])
 
   return (
-    <div className="flex h-screen bg-surface-0">
-      {/* Desktop Sidebar */}
-      <motion.aside
-        className="hidden lg:flex flex-col border-r border-gray-200 bg-white overflow-y-auto"
-        animate={{ width: sidebarCollapsed ? 0 : 272 }}
-        transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
-      >
-        {!sidebarCollapsed && (
-          <SidebarContent currentPath={location.pathname} onNavigate={closeMobile} />
-        )}
-      </motion.aside>
-
+    <div className="flex min-h-screen bg-white">
       {/* Mobile overlay */}
       <AnimatePresence>
         {sidebarOpen && (
           <>
             <motion.div
-              className="fixed inset-0 z-40 bg-black/30 lg:hidden"
+              className="fixed inset-0 z-40 bg-black/20 backdrop-blur-sm lg:hidden"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={closeMobile}
             />
             <motion.aside
-              className="fixed inset-y-0 left-0 z-50 w-72 bg-white shadow-xl lg:hidden overflow-y-auto"
-              initial={{ x: -288 }}
+              className="fixed inset-y-0 left-0 z-50 w-[264px] bg-white shadow-xl lg:hidden overflow-y-auto"
+              initial={{ x: -264 }}
               animate={{ x: 0 }}
-              exit={{ x: -288 }}
+              exit={{ x: -264 }}
               transition={{ duration: 0.25, ease: [0.25, 0.1, 0.25, 1] }}
             >
-              <SidebarContent currentPath={location.pathname} onNavigate={closeMobile} />
+              <SidebarContent activeId={activeId} onNavigate={closeMobile} />
             </motion.aside>
           </>
         )}
       </AnimatePresence>
 
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:flex w-[264px] shrink-0 sticky top-0 h-screen flex-col border-r border-gray-200 bg-white overflow-y-auto scrollbar-thin">
+        <SidebarContent activeId={activeId} onNavigate={closeMobile} />
+      </aside>
+
       {/* Main area */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      <div className="flex-1 min-w-0">
         {/* Mobile header */}
         <header className="sticky top-0 z-30 flex items-center gap-3 px-5 py-3 glass lg:hidden">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
+            className="p-1.5 rounded-lg hover:bg-gray-100 transition-colors text-gray-600"
             aria-label="メニューを開く"
           >
-            <Menu size={20} />
+            <Menu size={18} />
           </button>
-          <span className="text-sm font-bold text-gray-900 tracking-[0.01em]">AI JEDI</span>
+          <img src="/images/ai-jedi-logo.png" alt="AI JEDI" className="w-[26px] h-[26px] object-contain rounded-md" />
+          <span className="text-[13px] font-bold text-gray-900">AI JEDI</span>
         </header>
 
-        {/* Desktop collapse toggle */}
-        <div className="hidden lg:flex items-center px-4 py-2">
-          <button
-            onClick={toggleCollapse}
-            className="p-2 rounded-lg hover:bg-gray-100 transition-colors text-gray-400 hover:text-gray-600"
-            aria-label={sidebarCollapsed ? 'サイドバーを開く' : 'サイドバーを閉じる'}
-          >
-            {sidebarCollapsed ? <PanelLeft size={18} /> : <PanelLeftClose size={18} />}
-          </button>
-        </div>
-
         {/* Page content */}
-        <main className="flex-1 overflow-y-auto">
-          <div className="max-w-5xl mx-auto px-6 sm:px-10 py-10 lg:py-16">
+        <main>
+          <div className="max-w-[880px] mx-auto px-6 sm:px-12 py-10 lg:py-10 pb-20">
             {children}
           </div>
         </main>
@@ -98,49 +87,56 @@ export function Layout({ children }: LayoutProps) {
 }
 
 interface SidebarContentProps {
-  readonly currentPath: string
+  readonly activeId: string
   readonly onNavigate: () => void
 }
 
-function SidebarContent({ currentPath, onNavigate }: SidebarContentProps) {
+function SidebarContent({ activeId, onNavigate }: SidebarContentProps) {
+  const handleClick = useCallback(
+    (href: string) => {
+      onNavigate()
+      const el = document.querySelector(href)
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' })
+      }
+    },
+    [onNavigate]
+  )
+
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="px-5 py-4 border-b border-gray-100">
-        <Link to="/" onClick={onNavigate} className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg bg-primary-900 flex items-center justify-center">
-            <span className="text-white text-xs font-black">AI</span>
-          </div>
-          <div>
-            <span className="text-sm font-bold text-gray-900 tracking-[0.01em]">AI JEDI</span>
-            <span className="block text-[10px] text-gray-400">事業説明ストーリーブック</span>
-          </div>
-        </Link>
-      </div>
+      <a
+        href="#hero"
+        onClick={(e) => { e.preventDefault(); handleClick('#hero') }}
+        className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-100 no-underline"
+      >
+        <img src="/images/ai-jedi-logo.png" alt="AI JEDI" className="w-9 h-9 object-contain rounded-lg" />
+        <div>
+          <div className="text-[13px] font-bold text-gray-900 tracking-[0.02em]">AI JEDI</div>
+          <div className="text-[10px] text-gray-400 font-semibold tracking-[0.1em] uppercase mt-px">AI Implementation</div>
+        </div>
+      </a>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 space-y-5">
+      <nav className="flex-1 px-2.5 py-2.5">
         {navigation.map((group) => (
-          <div key={group.category}>
-            <p className="px-3 mb-2 text-[10px] font-semibold text-gray-400 uppercase tracking-widest">
+          <div key={group.category} className="mb-1">
+            <p className="px-3 py-2.5 pb-1.5 text-[10px] font-bold text-gray-400 tracking-[0.12em] uppercase">
               {group.category}
             </p>
-            <div className="space-y-0.5">
+            <div className="space-y-px">
               {group.items.map((item) => {
-                const Icon = iconMap[item.icon]
-                const isActive = item.path === '/'
-                  ? currentPath === '/'
-                  : currentPath.startsWith(item.path)
-
+                const isActive = activeId === item.id
                 return (
-                  <Link
+                  <a
                     key={item.id}
-                    to={item.path}
-                    onClick={onNavigate}
+                    href={item.href}
+                    onClick={(e) => { e.preventDefault(); handleClick(item.href) }}
                     className={`
-                      relative flex items-center gap-2.5 px-3 py-2 rounded-lg text-[13px] font-medium transition-colors
+                      relative flex items-center gap-2 px-3 py-[7px] rounded-lg text-[13px] font-medium transition-all cursor-pointer no-underline
                       ${isActive
-                        ? 'bg-primary-50 text-primary-900'
+                        ? 'bg-gray-50 text-gray-800 font-semibold'
                         : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
                       }
                     `}
@@ -148,13 +144,17 @@ function SidebarContent({ currentPath, onNavigate }: SidebarContentProps) {
                     {isActive && (
                       <motion.div
                         layoutId="sidebar-active"
-                        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-full bg-primary-900"
+                        className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-full bg-gray-700"
                         transition={{ type: 'spring', stiffness: 350, damping: 30 }}
                       />
                     )}
-                    {Icon && <Icon size={16} />}
-                    <span>{item.label}</span>
-                  </Link>
+                    <span className="truncate">{item.label}</span>
+                    {item.badge && (
+                      <span className="ml-auto text-[9px] font-bold bg-gray-100 text-gray-600 px-[7px] py-px rounded-full tracking-[0.04em]">
+                        {item.badge}
+                      </span>
+                    )}
+                  </a>
                 )
               })}
             </div>
@@ -163,8 +163,9 @@ function SidebarContent({ currentPath, onNavigate }: SidebarContentProps) {
       </nav>
 
       {/* Footer */}
-      <div className="px-5 py-4 border-t border-gray-100">
-        <p className="text-[10px] text-gray-400">&copy; AI JEDI Inc.</p>
+      <div className="px-5 py-3 border-t border-gray-100 flex items-center gap-1.5">
+        <div className="w-1.5 h-1.5 rounded-full bg-gray-700" />
+        <span className="text-[10px] text-gray-400">AI JEDI Inc. — 2026</span>
       </div>
     </div>
   )

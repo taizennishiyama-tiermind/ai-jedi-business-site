@@ -1,83 +1,68 @@
 import { motion } from 'framer-motion'
-import { sectionIllustrations } from '@/data/illustrations'
 
-const painPoints = [
-  {
-    title: 'AIをやるべきなのは分かるが、何から着手すべきか決まらない',
-    description: '候補は山ほどある。でも「どれが正解か」を判断できる人材がいない。',
-  },
-  {
-    title: 'PoCは作ったのに、本番に進めない',
-    description: 'セキュリティ審査、既存システム連携、運用体制…PoCの「その先」で止まる。',
-  },
-  {
-    title: '要件定義が長引き、開発が始まる前に失速する',
-    description: '半年かけて仕様書を作っている間に、市場環境も社内体制も変わってしまう。',
-  },
-  {
-    title: 'AI人材が採れない、見極められない、足りない',
-    description: '求人を出しても応募がない。面接しても評価できない。社内にAI人材ゼロ。',
-  },
-  {
-    title: '研修をやっても、実務に定着しない',
-    description: '「面白かった」で終わる研修。翌週には誰もAIを使っていない。',
-  },
-  {
-    title: '速く作りたいが、品質・セキュリティは落とせない',
-    description: '「安く早く」を選ぶと品質が犠牲になる。でも従来の進め方では遅すぎる。',
-  },
+const painItems = [
+  'AIをやるべきことは分かっているが、何から着手すべきか定まらない',
+  '要件定義が長引き、開発が始まる前に失速する',
+  '研修をやっても、実務に定着しない',
+  'AI人材を採れない、見極められない、足りない',
+  '社内の推進責任者が孤立し、壁打ち相手がいない',
+  '速く作りたいが、品質・保守性・セキュリティは落とせない',
 ]
 
 export function PainPoints() {
   return (
-    <section className="mb-24">
-      <div className="flex flex-col md:flex-row items-start gap-8 mb-10">
-        <motion.div
-          className="flex-1"
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.35 }}
-        >
-          <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight mb-3">
-            こんな課題、ありませんか？
-          </h2>
-          <p className="text-lg sm:text-xl text-gray-500 leading-relaxed">
-            多くの企業がAI JEDIに相談する背景にある、共通の課題です。
-            <br className="hidden sm:block" />
-            一つでも当てはまれば、お力になれるかもしれません。
-          </p>
-        </motion.div>
-        <motion.div
-          className="shrink-0 w-32 md:w-40"
-          initial={{ opacity: 0, scale: 0.9 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          transition={{ delay: 0.1, duration: 0.4 }}
-        >
-          <img src={sectionIllustrations.painPoints} alt="" className="w-full h-auto" />
-        </motion.div>
-      </div>
+    <section className="doc-section mb-16" id="pain">
+      <motion.div
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.35 }}
+      >
+        <h2 className="text-[clamp(22px,2.8vw,32px)] font-extrabold text-gray-800 leading-[1.25] tracking-tight mb-3">
+          こんな課題、心当たりはありませんか？
+        </h2>
+        <p className="text-[15px] text-gray-500 leading-[1.7] font-normal mb-8">
+          企業がAI JEDIに相談する背景には、共通した課題があります。
+        </p>
+      </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {painPoints.map((point, i) => (
+      {/* Simple list — no cards, no numbers */}
+      <div className="flex flex-col gap-3 mb-8">
+        {painItems.map((item, i) => (
           <motion.div
-            key={point.title}
-            className="p-6 sm:p-8 rounded-2xl border border-gray-200 bg-white hover:border-red-200 hover:bg-red-50/30 transition-all"
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            key={item}
+            className="flex items-start gap-3 py-2"
+            initial={{ opacity: 0, x: -10 }}
+            whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
-            transition={{ delay: i * 0.06, duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ delay: i * 0.04, duration: 0.3 }}
           >
-            <h3 className="text-lg font-bold text-gray-900 leading-snug mb-3">
-              {point.title}
-            </h3>
-            <p className="text-base text-gray-500 leading-relaxed">
-              {point.description}
+            <div className="w-5 h-5 shrink-0 mt-0.5 bg-rose-50 border border-rose-100 rounded-full flex items-center justify-center">
+              <svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="#e11d48" strokeWidth="1.8" strokeLinecap="round">
+                <path d="M2 2l4 4M6 2l-4 4" />
+              </svg>
+            </div>
+            <p className="text-[15px] text-gray-700 leading-[1.6]">
+              {item}
             </p>
           </motion.div>
         ))}
       </div>
+
+      <motion.div
+        className="bg-gray-800 rounded-2xl px-8 py-7"
+        initial={{ opacity: 0, y: 12 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ delay: 0.1, duration: 0.35 }}
+      >
+        <p className="text-[clamp(17px,2vw,22px)] font-bold text-white leading-[1.5] mb-3">
+          AI JEDIは、これらを一気通貫で解決します。
+        </p>
+        <p className="text-[15px] text-white/65 leading-[1.75] font-normal">
+          戦略・開発・研修・人材・顧問を束ねて、AIを事業成果につなげるために必要な機能を実装責任まで持って提供します。
+        </p>
+      </motion.div>
     </section>
   )
 }
